@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PriceCompare - Smart Shopping Tool</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .price-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        .best-deal {
+            border: 2px solid #10B981;
+            position: relative;
+        }
+        .best-deal::after {
+            content: 'Best Deal';
+            position: absolute;
+            top: -12px;
+            right: 20px;
+            background: #10B981;
+            color: white;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .chart-container {
+            height: 300px;
+        }
+        @media (max-width: 768px) {
+            .search-container {
+                flex-direction: column;
+            }
+            .search-container input, .search-container button {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <header class="bg-white shadow-sm">
+        <div class="container mx-auto px-4 py-6">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center">
+                    <img src="https://placehold.co/40x40" alt="PriceCompare logo with a magnifying glass and price tag icon" class="mr-3">
+                    <h1 class="text-2xl font-bold text-gray-800">PriceCompare</h1>
+                </div>
+                <nav>
+                    <ul class="flex space-x-6">
+                        <li><a href="#" class="text-gray-600 hover:text-green-600">Home</a></li>
+                        <li><a href="#" class="text-gray-600 hover:text-green-600">Trending</a></li>
+                        <li><a href="#" class="text-gray-600 hover:text-green-600">About</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+        <section class="mb-12">
+            <div class="text-center mb-10">
+                <h2 class="text-3xl font-bold text-gray-800 mb-4">Find the Best Deals Across Stores</h2>
+                <p class="text-gray-600 max-w-2xl mx-auto">Compare prices from top retailers instantly and save money on your purchases</p>
+            </div>
+
+            <div class="search-container flex justify-center mb-8">
+                <div class="relative w-full max-w-2xl">
+                    <input type="text" id="productSearch" placeholder="Search for a product (e.g., iPhone 15, Nike Air Max)" 
+                           class="w-full px-6 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-green-500">
+                    <button id="searchBtn" class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-green-600 text-white px-6 py-2 rounded-full hover:bg-green-700 transition">
+                        <i class="fas fa-search mr-2"></i>Search
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap justify-center gap-4 mb-6">
+                <button class="filter-btn px-4 py-2 bg-gray-200 rounded-full hover:bg-gray-300 active:bg-green-600 active:text-white" data-category="all">All</button>
+                <button class="filter-btn px-4 py-2 bg-gray-200 rounded-full hover:bg-gray-300 active:bg-green-600 active:text-white" data-category="electronics">Electronics</button>
+                <button class="filter-btn px-4 py-2 bg-gray-200 rounded-full hover:bg-gray-300 active:bg-green-600 active:text-white" data-category="fashion">Fashion</button>
+                <button class="filter-btn px-4 py-2 bg-gray-200 rounded-full hover:bg-gray-300 active:bg-green-600 active:text-white" data-category="home">Home & Kitchen</button>
+                <button class="filter-btn px-4 py-2 bg-gray-200 rounded-full hover:bg-gray-300 active:bg-green-600 active:text-white" data-category="books">Books</button>
+            </div>
+        </section>
+
+        <section id="resultsSection" class="mb-12">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-semibold text-gray-800">Price Comparison Results</h3>
+                <div class="flex items-center">
+                    <span class="text-sm text-gray-600 mr-2">Sort by:</span>
+                    <select id="sortOptions" class="border border-gray-300 rounded px-3 py-1 focus:outline-none focus:ring-1 focus:ring-green-500">
+                        <option value="price-low">Price: Low to High</option>
+                        <option value="price-high">Price: High to Low</option>
+                        <option value="rating">Rating</option>
+                        <option value="delivery">Delivery Time</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="productResults" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Product cards will be dynamically inserted here -->
+            </div>
+        </section>
+
+        <section id="chartSection" class="bg-white p-6 rounded-lg shadow mb-12">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">Price Distribution</h3>
+            <div class="chart-container">
+                <canvas id="priceChart"></canvas>
+            </div>
+        </section>
+
+        <section class="bg-white p-6 rounded-lg shadow">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">How It Works</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="text-center p-4">
+                    <div class="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-search text-green-600 text-2xl"></i>
+                    </div>
+                    <h4 class="font-medium text-gray-800 mb-2">Search Products</h4>
+                    <p class="text-gray-600">Enter the product name you're looking for in our search bar</p>
+                </div>
+                <div class="text-center p-4">
+                    <div class="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-exchange-alt text-green-600 text-2xl"></i>
+                    </div>
+                    <h4 class="font-medium text-gray-800 mb-2">Compare Prices</h4>
+                    <p class="text-gray-600">See prices from multiple retailers side by side</p>
+                </div>
+                <div class="text-center p-4">
+                    <div class="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-wallet text-green-600 text-2xl"></i>
+                    </div>
+                    <h4 class="font-medium text-gray-800 mb-2">Save Money</h4>
+                    <p class="text-gray-600">Choose the best deal and save on your purchase</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-800 text-white py-8">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">PriceCompare</h4>
+                    <p class="text-gray-400">Your smart shopping companion helping you find the best deals across the web.</p>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Quick Links</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white">Home</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Trending Deals</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">About Us</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Contact</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Popular Categories</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white">Electronics</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Fashion</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Home & Kitchen</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Books</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Newsletter</h4>
+                    <p class="text-gray-400 mb-2">Subscribe for the latest deals</p>
+                    <div class="flex">
+                        <input type="email" placeholder="Your email" class="px-3 py-2 rounded-l text-gray-800 w-full">
+                        <button class="bg-green-600 px-4 py-2 rounded-r hover:bg-green-700">Subscribe</button>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-8 pt-6 text-center text-gray-400">
+                <p>© 2023 PriceCompare. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Sample product data (in a real app, this would come from an API)
+        const products = [
+            {
+                id: 1,
+                name: "Apple iPhone 15 Pro Max",
+                category: "electronics",
+                image: "https://placehold.co/300x300",
+                alt: "Apple iPhone 15 Pro Max smartphone in titanium finish with edge display",
+                stores: [
+                    { name: "Amazon", price: 1199, rating: 4.8, delivery: "2 days", logo: "https://placehold.co/40x20", logoAlt: "Amazon logo" },
+                    { name: "Best Buy", price: 1199, rating: 4.7, delivery: "3 days", logo: "https://placehold.co/40x20", logoAlt: "Best Buy logo" },
+                    { name: "Walmart", price: 1149, rating: 4.5, delivery: "5 days", logo: "https://placehold.co/40x20", logoAlt: "Walmart logo" }
+                ]
+            },
+            {
+                id: 2,
+                name: "Sony WH-1000XM5 Wireless Headphones",
+                category: "electronics",
+                image: "https://placehold.co/300x300",
+                alt: "Sony WH-1000XM5 premium noise-cancelling wireless headphones in black",
+                stores: [
+                    { name: "Amazon", price: 349, rating: 4.9, delivery: "1 day", logo: "https://placehold.co/40x20", logoAlt: "Amazon logo" },
+                    { name: "Best Buy", price: 399, rating: 4.8, delivery: "2 days", logo: "https://placehold.co/40x20", logoAlt: "Best Buy logo" },
+                    { name: "Target", price: 379, rating: 4.6, delivery: "3 days", logo: "https://placehold.co/40x20", logoAlt: "Target logo" }
+                ]
+            },
+            {
+                id: 3,
+                name: "Nike Air Max 270",
+                category: "fashion",
+                image: "https://placehold.co/300x300",
+                alt: "Nike Air Max 270 sneakers in white and black colorway",
+                stores: [
+                    { name: "Nike", price: 160, rating: 4.7, delivery: "3 days", logo: "https://placehold.co/40x20", logoAlt: "Nike logo" },
+                    { name: "Amazon", price: 145, rating: 4.6, delivery: "4 days", logo: "https://placehold.co/40x20", logoAlt: "Amazon logo" },
+                    { name: "Foot Locker", price: 150, rating: 4.5, delivery: "2 days", logo: "https://placehold.co/40x20", logoAlt: "Foot Locker logo" }
+                ]
+            },
+            {
+                id: 4,
+                name: "Instant Pot Duo 7-in-1",
+                category: "home",
+                image: "https://placehold.co/300x300",
+                alt: "Instant Pot Duo 7-in-1 electric pressure cooker in stainless steel",
+                stores: [
+                    { name: "Amazon", price: 99, rating: 4.8, delivery: "1 day", logo: "https://placehold.co/40x20", logoAlt: "Amazon logo" },
+                    { name: "Walmart", price: 89, rating: 4.6, delivery: "5 days", logo: "https://placehold.co/40x20", logoAlt: "Walmart logo" },
+                    { name: "Target", price: 95, rating: 4.7, delivery: "3 days", logo: "https://placehold.co/40x20", logoAlt: "Target logo" }
+                ]
+            },
+            {
+                id: 5,
+                name: "Dyson V15 Detect Vacuum",
+                category: "home",
+                image: "https://placehold.co/300x300",
+                alt: "Dyson V15 Detect cordless vacuum cleaner with laser dust detection",
+                stores: [
+                    { name: "Dyson", price: 699, rating: 4.9, delivery: "4 days", logo: "https://placehold.co/40x20", logoAlt: "Dyson logo" },
+                    { name: "Best Buy", price: 649, rating: 4.8, delivery: "2 days", logo: "https://placehold.co/40x20", logoAlt: "Best Buy logo" },
+                    { name: "Amazon", price: 679, rating: 4.7, delivery: "1 day", logo: "https://placehold.co/40x20", logoAlt: "Amazon logo" }
+                ]
+            },
+            {
+                id: 6,
+                name: "The Psychology of Money",
+                category: "books",
+                image: "https://placehold.co/300x300",
+                alt: "Book cover of The Psychology of Money by Morgan Housel",
+                stores: [
+                    { name: "Amazon", price: 15, rating: 4.8, delivery: "2 days", logo: "https://placehold.co/40x20", logoAlt: "Amazon logo" },
+                    { name: "Barnes & Noble", price: 18, rating: 4.7, delivery: "5 days", logo: "https://placehold.co/40x20", logoAlt: "Barnes & Noble logo" },
+                    { name: "Walmart", price: 16, rating: 4.6, delivery: "4 days", logo: "https://placehold.co/40x20", logoAlt: "Walmart logo" }
+                ]
+            }
+        ];
+
+        // DOM Elements
+        const productResults = document.getElementById('productResults');
+        const productSearch = document.getElementById('productSearch');
+        const searchBtn = document.getElementById('searchBtn');
+        const filterBtns = document.querySelectorAll('.filter-btn');
+        const sortOptions = document.getElementById('sortOptions');
+        const chartSection = document.getElementById('chartSection');
+        let priceChart = null;
+
+        // Initialize the page with all products
+        displayProducts(products);
+        updateChart(products);
+
+        // Event Listeners
+        searchBtn.addEventListener('click', handleSearch);
+        productSearch.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') handleSearch();
+        });
+
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                filterBtns.forEach(b => b.classList.remove('active', 'bg-green-600', 'text-white'));
+                this.classList.add('active', 'bg-green-600', 'text-white');
+                filterProducts(this.dataset.category);
+            });
+        });
+
+        sortOptions.addEventListener('change', function() {
+            sortProducts(this.value);
+        });
+
+        // Functions
+        function handleSearch() {
+            const searchTerm = productSearch.value.trim().toLowerCase();
+            if (searchTerm === '') {
+                displayProducts(products);
+                updateChart(products);
+                return;
+            }
+
+            const filtered = products.filter(product => 
+                product.name.toLowerCase().includes(searchTerm) ||
+                product.category.toLowerCase().includes(searchTerm)
+            );
+
+            displayProducts(filtered);
+            updateChart(filtered);
+        }
+
+        function filterProducts(category) {
+            if (category === 'all') {
+                displayProducts(products);
+                updateChart(products);
+                return;
+            }
+
+            const filtered = products.filter(product => product.category === category);
+            displayProducts(filtered);
+            updateChart(filtered);
+        }
+
+        function sortProducts(option) {
+            const sorted = [...products];
+            
+            switch(option) {
+                case 'price-low':
+                    sorted.forEach(product => {
+                        product.stores.sort((a, b) => a.price - b.price);
+                    });
+                    break;
+                case 'price-high':
+                    sorted.forEach(product => {
+                        product.stores.sort((a, b) => b.price - a.price);
+                    });
+                    break;
+                case 'rating':
+                    sorted.forEach(product => {
+                        product.stores.sort((a, b) => b.rating - a.rating);
+                    });
+                    break;
+                case 'delivery':
+                    sorted.forEach(product => {
+                        product.stores.sort((a, b) => {
+                            const aDays = parseInt(a.delivery);
+                            const bDays = parseInt(b.delivery);
+                            return aDays - bDays;
+                        });
+                    });
+                    break;
+            }
+
+            displayProducts(sorted);
+        }
+
+        function displayProducts(productsToDisplay) {
+            productResults.innerHTML = '';
+
+            if (productsToDisplay.length === 0) {
+                productResults.innerHTML = `
+                    <div class="col-span-3 text-center py-10">
+                        <i class="fas fa-search text-4xl text-gray-400 mb-4"></i>
+                        <h4 class="text-xl font-medium text-gray-600">No products found</h4>
+                        <p class="text-gray-500">Try a different search term or category</p>
+                    </div>
+                `;
+                chartSection.classList.add('hidden');
+                return;
+            }
+
+            chartSection.classList.remove('hidden');
+
+            productsToDisplay.forEach(product => {
+                // Find the best deal (lowest price)
+                const bestDeal = product.stores.reduce((min, store) => 
+                    store.price < min.price ? store : min, product.stores[0]);
+
+                const productCard = document.createElement('div');
+                productCard.className = 'bg-white rounded-lg shadow-md overflow-hidden price-card transition duration-300';
+                
+                productCard.innerHTML = `
+                    <div class="relative">
+                        <img src="${product.image}" alt="${product.alt}" class="w-full h-48 object-cover">
+                        <span class="absolute top-2 left-2 bg-green-600 text-white text-xs px-2 py-1 rounded">${product.category}</span>
+                    </div>
+                    <div class="p-4">
+                        <h3 class="font-semibold text-lg mb-2">${product.name}</h3>
+                        
+                        <div class="space-y-3 mt-4">
+                            ${product.stores.map(store => `
+                                <div class="store-price ${store.price === bestDeal.price ? 'best-deal' : ''} p-3 rounded-lg border border-gray-200">
+                                    <div class="flex justify-between items-center mb-1">
+                                        <div class="flex items-center">
+                                            <img src="${store.logo}" alt="${store.logoAlt}" class="h-5 mr-2">
+                                            <span class="font-medium">${store.name}</span>
+                                        </div>
+                                        <span class="text-lg font-bold text-gray-800">$${store.price}</span>
+                                    </div>
+                                    <div class="flex justify-between text-sm text-gray-600">
+                                        <span><i class="fas fa-star text-yellow-400 mr-1"></i>${store.rating}</span>
+                                        <span><i class="fas fa-shipping-fast text-gray-500 mr-1"></i>${store.delivery}</span>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        
+                        <button class="mt-4 w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg transition">
+                            <i class="fas fa-shopping-cart mr-2"></i>View All Deals
+                        </button>
+                    </div>
+                `;
+                
+                productResults.appendChild(productCard);
+            });
+        }
+
+        function updateChart(productsToDisplay) {
+            if (productsToDisplay.length === 0) return;
+
+            const ctx = document.getElementById('priceChart').getContext('2d');
+            
+            // Destroy previous chart if it exists
+            if (priceChart) {
+                priceChart.destroy();
+            }
+
+            // Prepare data for chart
+            const labels = productsToDisplay.map(p => p.name);
+            const datasets = [];
+            
+            if (productsToDisplay[0] && productsToDisplay[0].stores) {
+                const storeNames = productsToDisplay[0].stores.map(s => s.name);
+                
+                storeNames.forEach(storeName => {
+                    const storePrices = productsToDisplay.map(product => {
+                        const store = product.stores.find(s => s.name === storeName);
+                        return store ? store.price : null;
+                    });
+                    
+                    datasets.push({
+                        label: storeName,
+                        data: storePrices,
+                        backgroundColor: getRandomColor(),
+                        borderColor: getRandomColor(),
+                        borderWidth: 1
+                    });
+                });
+            }
+
+            priceChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Price ($)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Products'
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: $${context.raw}`;
+                                }
+                            }
+                        },
+                        legend: {
+                            position: 'top',
+                        }
+                    }
+                }
+            });
+        }
+
+        function getRandomColor() {
+            const letters = '0123456789ABCDEF';
+            let color = '#';
+            for (let i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        }
+    </script>
+</body>
+</html>
